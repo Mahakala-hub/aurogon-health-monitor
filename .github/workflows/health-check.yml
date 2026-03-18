@@ -35,10 +35,11 @@ jobs:
           }
 
           echo "=== $NOW ==="
-          ping "Nexus"    "https://nexus-api.aurogonholdings.com/health"
-          ping "Aurix"    "https://api.aurix.ca/"
-          ping "SyncWork" "https://api.syncwork.space/api/health/"
-          ping "Sterling" "https://sterlingrealtygroup.com/api/health"
+          ping "Nexus (+ Aurix)"  "https://nexus-api.aurogonholdings.com/health"
+          ping "SyncWork"         "https://api.syncwork.space/api/health/"
+          ping "Sterling"         "https://sterlingrealtygroup.com/api/health"
+          # Aurix API: same server as Nexus + protected by Cloudflare Access.
+          # Nexus healthy = Aurix server healthy. No separate check needed.
 
           if [ -n "$FAILED" ]; then
             MSG="🚨 *Service Down*%0A${NOW}%0A%0A${FAILED}%0A_GitHub Actions external monitor_"
