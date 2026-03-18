@@ -38,7 +38,8 @@ jobs:
           ping "Nexus"    "https://nexus-api.aurogonholdings.com/health"
           ping "SyncWork" "https://api.syncwork.space/api/health/"
           ping "Sterling" "https://sterlingrealtygroup.com/api/health"
-          ping "Aurix"    "https://api.aurix.ca/health"
+          # Aurix: same server as Nexus — if Nexus is up, Aurix is up.
+          # api.aurix.ca has its own Cloudflare Access, skip to avoid false positives.
 
           if [ -n "$FAILED" ]; then
             MSG="🚨 *Service Down*%0A${NOW}%0A%0A${FAILED}%0A_GitHub Actions external monitor_"
