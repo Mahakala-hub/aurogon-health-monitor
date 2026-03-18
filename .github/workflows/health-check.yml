@@ -25,7 +25,7 @@ jobs:
           NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
 
           ping() {
-            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$2" 2>/dev/null || echo "000")
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -H "User-Agent: AurogonHealthMonitor/1.0" "$2" 2>/dev/null || echo "000")
             if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 400 ]; then
               echo "  ✅ $1"
             else
