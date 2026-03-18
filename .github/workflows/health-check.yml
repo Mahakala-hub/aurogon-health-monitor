@@ -1,0 +1,53 @@
+# Aurogon External Health Monitor
+# Runs on GitHub Actions (FREE for public repos — unlimited minutes)
+# Pings all services every 5 minutes. Sends Telegram alert on failure.
+# This is the ONLY monitoring that works when the Aurix home server is down.
+
+name: Health Check
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping all Aurogon services
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TG_TOPIC: ${{ secrets.TELEGRAM_TOPIC_ID }}
+        run: |
+          FAILED=""
+          NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+
+          ping() {
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$2" 2>/dev/null || echo "000")
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 400 ]; then
+              echo "  ✅ $1"
+            else
+              echo "  ❌ $1 (HTTP $CODE)"
+              FAILED="${FAILED}❌ $1 — HTTP ${CODE}%0A"
+            fi
+          }
+
+          echo "=== $NOW ==="
+          ping "Nexus"    "https://nexus-api.aurogonholdings.com/health"
+          ping "SyncWork" "https://api.syncwork.space/api/health/"
+          ping "Sterling" "https://sterlingrealtygroup.com/api/health"
+          ping "Aurix"    "https://api.aurix.ca/health"
+
+          if [ -n "$FAILED" ]; then
+            MSG="🚨 *Service Down*%0A${NOW}%0A%0A${FAILED}%0A_GitHub Actions external monitor_"
+            if [ -n "$TG_TOKEN" ]; then
+              PAYLOAD="chat_id=${TG_CHAT}&text=${MSG}&parse_mode=Markdown"
+              [ -n "$TG_TOPIC" ] && PAYLOAD="${PAYLOAD}&message_thread_id=${TG_TOPIC}"
+              curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" -d "$PAYLOAD" > /dev/null
+              echo "  → Telegram alert sent"
+            fi
+            exit 1
+          fi
+          echo "  All healthy ✅"
